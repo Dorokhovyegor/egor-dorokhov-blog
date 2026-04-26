@@ -2,6 +2,8 @@ backend:
   name: github
   repo: Dorokhovyegor/egor-dorokhov-blog
   branch: main
+  base_url: https://eidorokhov.ru
+  auth_endpoint: api/auth
 
 media_folder: public/uploads
 public_folder: /uploads
