@@ -1,6 +1,6 @@
 backend:
   name: github
-  repo: your-github-username/egor-dorokhov-blog
+  repo: Dorokhovyegor/egor-dorokhov-blog
   branch: main
 
 media_folder: public/uploads
