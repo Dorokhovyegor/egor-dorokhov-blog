@@ -1,0 +1,29 @@
+backend:
+  name: github
+  repo: your-github-username/egor-dorokhov-blog
+  branch: main
+
+media_folder: public/uploads
+public_folder: /uploads
+
+site_url: /
+logo_url: /
+locale: ru
+
+collections:
+  - name: posts
+    label: Статьи
+    folder: content/posts
+    create: true
+    slug: "{{slug}}"
+    extension: md
+    format: frontmatter
+    summary: "{{title}} — {{date}}"
+    fields:
+      - { label: Заголовок, name: title, widget: string }
+      - { label: Slug, name: slug, widget: string, hint: "Уникальный URL-сегмент, только латиница/цифры/дефис" }
+      - { label: Дата, name: date, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false }
+      - { label: Теги, name: tags, widget: list, default: [] }
+      - { label: Краткое описание, name: excerpt, widget: text, required: false }
+      - { label: Опубликовано, name: published, widget: boolean, default: true }
+      - { label: Текст статьи, name: body, widget: markdown }
