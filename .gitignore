@@ -2,6 +2,7 @@ node_modules
 .dist
 dist
 .vite
+bin
 .DS_Store
 npm-debug.log*
 yarn-debug.log*
@@ -11,6 +12,7 @@ pnpm-debug.log*
 # env files
 .env
 .env.*
+!.env.example
 
 # local history
 .history

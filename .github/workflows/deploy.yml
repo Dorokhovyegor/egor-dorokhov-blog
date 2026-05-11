@@ -24,11 +24,23 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
       - name: Install dependencies
         run: npm ci
 
       - name: Build
         run: npm run build
+
+      - name: Test backend
+        run: go test ./...
+
+      - name: Build backend
+        run: go build -o blog-server ./cmd/blog
 
       - name: Validate deploy secrets
         env:
@@ -61,7 +73,7 @@ jobs:
           PORT="${SSH_PORT:-22}"
           ssh-keyscan -p "$PORT" "$SSH_HOST" >> ~/.ssh/known_hosts
 
-      - name: Deploy dist via rsync
+      - name: Deploy monolith via rsync
         env:
           SSH_HOST: ${{ vars.SSH_HOST || secrets.SSH_HOST }}
           SSH_USER: ${{ vars.SSH_USER || secrets.SSH_USER }}
@@ -70,4 +82,24 @@ jobs:
         run: |
           set -eu
           PORT="${SSH_PORT:-22}"
-          rsync -az --delete -e "ssh -p $PORT" dist/ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/"
+          ssh -p "$PORT" "$SSH_USER@$SSH_HOST" "mkdir -p '$DEPLOY_PATH/dist' '$DEPLOY_PATH/content'"
+          rsync -az --delete -e "ssh -p $PORT" dist/ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/dist/"
+          rsync -az --delete -e "ssh -p $PORT" content/ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/content/"
+          rsync -az -e "ssh -p $PORT" blog-server "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/blog-server"
+          ssh -p "$PORT" "$SSH_USER@$SSH_HOST" "chmod +x '$DEPLOY_PATH/blog-server'"
+
+      - name: Restart backend service
+        env:
+          SSH_HOST: ${{ vars.SSH_HOST || secrets.SSH_HOST }}
+          SSH_USER: ${{ vars.SSH_USER || secrets.SSH_USER }}
+          SSH_PORT: ${{ vars.SSH_PORT || secrets.SSH_PORT }}
+          SYSTEMD_SERVICE: ${{ vars.SYSTEMD_SERVICE || secrets.SYSTEMD_SERVICE }}
+        run: |
+          set -eu
+          if [ -z "${SYSTEMD_SERVICE:-}" ]; then
+            echo "SYSTEMD_SERVICE is not set; skipping backend restart"
+            exit 0
+          fi
+
+          PORT="${SSH_PORT:-22}"
+          ssh -p "$PORT" "$SSH_USER@$SSH_HOST" "sudo systemctl restart '$SYSTEMD_SERVICE'"

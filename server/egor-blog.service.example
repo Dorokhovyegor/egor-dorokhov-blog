@@ -1,0 +1,14 @@
+[Unit]
+Description=Egor Dorokhov Blog
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/www/egor-blog
+ExecStart=/var/www/egor-blog/blog-server
+Restart=always
+RestartSec=3
+EnvironmentFile=/etc/egor-blog/egor-blog.env
+
+[Install]
+WantedBy=multi-user.target

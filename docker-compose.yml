@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: blog
+      POSTGRES_USER: blog
+      POSTGRES_PASSWORD: blog
+    ports:
+      - "127.0.0.1:55432:5432"
+    volumes:
+      - blog_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  blog_postgres_data:

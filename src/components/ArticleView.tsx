@@ -5,6 +5,7 @@ import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { Article } from "../lib/articles";
+import { ArticleStats } from "../lib/engagement";
 
 type ArticleViewProps = {
   article: Article;
@@ -13,6 +14,9 @@ type ArticleViewProps = {
   previousArticle?: Article;
   nextArticle?: Article;
   onOpenArticle: (slug: string) => void;
+  stats?: ArticleStats;
+  isLikePending: boolean;
+  onToggleLike: (slug: string) => void;
 };
 
 const prettyDate = (value: string) =>
@@ -21,6 +25,16 @@ const prettyDate = (value: string) =>
     month: "long",
     year: "numeric"
   }).format(new Date(value));
+
+const formatCount = (value: number | undefined) => new Intl.NumberFormat("ru-RU").format(value ?? 0);
+
+const formatReads = (value: number | undefined) => {
+  const count = value ?? 0;
+  const plural = new Intl.PluralRules("ru-RU").select(count);
+  const label = plural === "one" ? "прочтение" : plural === "few" ? "прочтения" : "прочтений";
+
+  return `${formatCount(count)} ${label}`;
+};
 
 const copyToClipboard = async (value: string) => {
   if (navigator.clipboard?.writeText) {
@@ -136,13 +150,43 @@ const MarkdownImage = ({
   );
 };
 
+const EyeIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
+    <path
+      d="M2.5 12s3.4-6 9.5-6 9.5 6 9.5 6-3.4 6-9.5 6-9.5-6-9.5-6Z"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.8"
+    />
+    <circle cx="12" cy="12" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.8" />
+  </svg>
+);
+
+const HeartIcon = ({ filled = false }: { filled?: boolean }) => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
+    <path
+      d="M20.3 5.7a5 5 0 0 0-7.1 0L12 6.9l-1.2-1.2a5 5 0 0 0-7.1 7.1L12 21l8.3-8.2a5 5 0 0 0 0-7.1Z"
+      fill={filled ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.8"
+    />
+  </svg>
+);
+
 export const ArticleView = ({
   article,
   onBack,
   onTagClick,
   previousArticle,
   nextArticle,
-  onOpenArticle
+  onOpenArticle,
+  stats,
+  isLikePending,
+  onToggleLike
 }: ArticleViewProps) => {
   return (
     <article className="rounded-3xl border border-line/70 bg-white p-6 shadow-soft sm:p-10">
@@ -156,6 +200,28 @@ export const ArticleView = ({
 
       <p className="mt-7 text-xs uppercase tracking-[0.14em] text-ink/50">{prettyDate(article.date)}</p>
       <h1 className="mt-3 text-3xl font-semibold text-ink sm:text-4xl">{article.title}</h1>
+
+      <div className="mt-5 flex flex-wrap items-center gap-3 text-sm font-semibold text-ink/60">
+        <span className="inline-flex items-center gap-2 rounded-full bg-fog px-3.5 py-2">
+          <EyeIcon />
+          {formatReads(stats?.reads)}
+        </span>
+        <button
+          type="button"
+          aria-label={stats?.liked ? "Убрать лайк" : "Поставить лайк"}
+          aria-pressed={Boolean(stats?.liked)}
+          disabled={isLikePending}
+          onClick={() => onToggleLike(article.slug)}
+          className={`inline-flex items-center gap-2 rounded-full px-3.5 py-2 transition ${
+            stats?.liked
+              ? "bg-accent text-white hover:brightness-95"
+              : "bg-accentSoft text-accent hover:brightness-95"
+          } disabled:cursor-wait disabled:opacity-70`}
+        >
+          <HeartIcon filled={stats?.liked} />
+          {formatCount(stats?.likes)}
+        </button>
+      </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
         {article.tags.map((tag) => (

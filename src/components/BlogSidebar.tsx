@@ -1,3 +1,5 @@
+import { SiteStats } from "../lib/engagement";
+
 type TagItem = {
   name: string;
   count: number;
@@ -6,6 +8,7 @@ type TagItem = {
 type SidebarProps = {
   tags: TagItem[];
   activeTag?: string;
+  siteStats?: SiteStats | null;
   onSelectTag: (tag?: string) => void;
 };
 
@@ -31,6 +34,8 @@ const links: LinkItem[] = [
   }
 ];
 
+const formatCount = (value: number | undefined) => new Intl.NumberFormat("ru-RU").format(value ?? 0);
+
 const LinkIcon = ({ kind }: { kind: "telegram" | "boosty" }) => {
   if (kind === "telegram") {
     return (
@@ -54,7 +59,7 @@ const LinkIcon = ({ kind }: { kind: "telegram" | "boosty" }) => {
   );
 };
 
-export const BlogSidebar = ({ tags, activeTag, onSelectTag }: SidebarProps) => {
+export const BlogSidebar = ({ tags, activeTag, siteStats, onSelectTag }: SidebarProps) => {
   return (
     <aside className="overflow-hidden rounded-3xl">
       <div className="px-6 pb-6 pt-3">
@@ -69,6 +74,21 @@ export const BlogSidebar = ({ tags, activeTag, onSelectTag }: SidebarProps) => {
       </div>
 
       <div className="space-y-7 p-6">
+        <section className="grid grid-cols-3 gap-2 rounded-2xl bg-white p-3 shadow-sm">
+          <div>
+            <p className="text-lg font-bold leading-none text-ink">{formatCount(siteStats?.visitorsTotal)}</p>
+            <p className="mt-1 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-ink/45">Людей</p>
+          </div>
+          <div>
+            <p className="text-lg font-bold leading-none text-ink">{formatCount(siteStats?.visitsTotal)}</p>
+            <p className="mt-1 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-ink/45">Визитов</p>
+          </div>
+          <div>
+            <p className="text-lg font-bold leading-none text-ink">{formatCount(siteStats?.articleReadsTotal)}</p>
+            <p className="mt-1 text-[0.68rem] font-semibold uppercase tracking-[0.08em] text-ink/45">Чтений</p>
+          </div>
+        </section>
+
         <section>
           <div className="grid grid-cols-1 gap-4">
           {links.map((link) => (
