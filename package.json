@@ -5,8 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:db": "docker compose up -d postgres",
+    "dev:server": "DB_DSN=postgres://blog:blog@127.0.0.1:55432/blog?sslmode=disable go run ./cmd/blog",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "post:new": "node scripts/new-post.mjs",
+    "content:check": "node scripts/check-content.mjs",
+    "backend:check": "go test ./... && go build -o /tmp/egor-blog-check ./cmd/blog",
+    "check": "npm run content:check && npm run build && npm run backend:check",
     "server": "go run ./cmd/blog",
     "start": "go run ./cmd/blog"
   },

@@ -27,5 +27,5 @@ collections:
       - { label: Дата, name: date, widget: datetime, format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false }
       - { label: Теги, name: tags, widget: list, default: [] }
       - { label: Краткое описание, name: excerpt, widget: text, required: false }
-      - { label: Опубликовано, name: published, widget: boolean, default: true }
+      - { label: Опубликовано, name: published, widget: boolean, default: false }
       - { label: Текст статьи, name: body, widget: markdown }

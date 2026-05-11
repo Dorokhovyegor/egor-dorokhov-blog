@@ -15,10 +15,9 @@
 ## Локальный запуск
 
 ```bash
-docker compose up -d postgres
-export DB_DSN="postgres://blog:blog@127.0.0.1:55432/blog?sslmode=disable"
+npm run dev:db
 npm run build
-npm run server
+npm run dev:server
 ```
 
 Сервер по умолчанию слушает `127.0.0.1:8787`; локально сайт можно открыть на `http://127.0.0.1:8787`. Он отдает собранный `dist` и API на `/api/*`.
@@ -50,6 +49,8 @@ JSON-хранилища больше нет. Если `DB_DSN` не задан �
 ## Публикация статей
 
 Сейчас источник статей - markdown-файлы в `content/posts`. Frontend их не импортирует: Go backend читает эти файлы и отдает JSON через `/api/articles`, `/api/articles/{slug}` и `/api/tags`.
+
+Обычный сценарий создания и публикации статей описан в `docs/publishing.md`.
 
 GitHub Action собирает frontend, собирает Go-бинарник, деплоит `dist`, `content` и `blog-server` на VPS. Runtime-метрики хранятся в Postgres, поэтому деплой файлов их не трогает.
 

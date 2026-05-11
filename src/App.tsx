@@ -5,9 +5,7 @@ import { BlogSidebar } from "./components/BlogSidebar";
 import { Article, TagItem, filterArticlesByTag, findArticleBySlug, getArticles, getTags } from "./lib/articles";
 import {
   ArticleStats,
-  SiteStats,
   getArticleStats,
-  getSiteStats,
   trackArticleRead,
   trackSiteVisit,
   toggleArticleLike
@@ -50,7 +48,6 @@ const App = () => {
   const [contentError, setContentError] = useState<string | null>(null);
   const articleSlugs = useMemo(() => articles.map((item) => item.slug), [articles]);
   const [articleStats, setArticleStats] = useState<Record<string, ArticleStats>>({});
-  const [siteStats, setSiteStats] = useState<SiteStats | null>(null);
   const [pendingLikeSlugs, setPendingLikeSlugs] = useState<Set<string>>(() => new Set());
 
   const segments = pathname
@@ -114,7 +111,7 @@ const App = () => {
     let isMounted = true;
 
     const loadEngagement = async () => {
-      const [trackedSiteStats, stats] = await Promise.all([
+      const [, stats] = await Promise.all([
         trackSiteVisit(window.location.pathname),
         getArticleStats(articleSlugs)
       ]);
@@ -123,7 +120,6 @@ const App = () => {
         return;
       }
 
-      setSiteStats(trackedSiteStats);
       setArticleStats(
         stats.reduce<Record<string, ArticleStats>>((acc, item) => {
           acc[item.slug] = item;
@@ -148,7 +144,6 @@ const App = () => {
     const readTimer = window.setTimeout(() => {
       const registerRead = async () => {
         const stats = await trackArticleRead(articleSlug, window.location.pathname);
-        const latestSiteStats = await getSiteStats();
 
         if (!isMounted) {
           return;
@@ -158,7 +153,6 @@ const App = () => {
           ...current,
           [stats.slug]: stats
         }));
-        setSiteStats(latestSiteStats);
       };
 
       void registerRead();
@@ -281,7 +275,6 @@ const App = () => {
           <BlogSidebar
             tags={tags}
             activeTag={activeTag}
-            siteStats={siteStats}
             onSelectTag={(tag) =>
               navigate(tag ? `/blog/tag/${encodeURIComponent(tag)}` : "/blog")
             }
