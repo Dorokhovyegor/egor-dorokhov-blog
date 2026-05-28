@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ArticleList } from "./components/ArticleList";
 import { ArticleView } from "./components/ArticleView";
 import { BlogSidebar } from "./components/BlogSidebar";
@@ -19,11 +19,31 @@ const safeDecode = (value: string) => {
   }
 };
 
+const savedScrollPositions = new Map<string, number>();
+
+const getScrollKey = (pathname: string) => {
+  const normalizedPath = pathname.replace(/\/+$/g, "") || "/";
+
+  if (normalizedPath === "/" || normalizedPath === "/blog") {
+    return "/blog";
+  }
+
+  return normalizedPath;
+};
+
 const usePathname = () => {
   const [path, setPath] = useState(() => window.location.pathname || "/");
+  const pathRef = useRef(path);
 
   useEffect(() => {
-    const onPopState = () => setPath(window.location.pathname || "/");
+    const onPopState = () => {
+      savedScrollPositions.set(getScrollKey(pathRef.current), window.scrollY);
+
+      const nextPath = window.location.pathname || "/";
+      pathRef.current = nextPath;
+      setPath(nextPath);
+    };
+
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
@@ -36,6 +56,7 @@ const navigate = (to: string) => {
     return;
   }
 
+  savedScrollPositions.set(getScrollKey(window.location.pathname || "/"), window.scrollY);
   window.history.pushState({}, "", to);
   window.dispatchEvent(new PopStateEvent("popstate"));
 };
@@ -70,6 +91,25 @@ const App = () => {
   const articleIndex = article ? articles.findIndex((item) => item.slug === article.slug) : -1;
   const previousArticle = articleIndex > 0 ? articles[articleIndex - 1] : undefined;
   const nextArticle = articleIndex >= 0 && articleIndex < articles.length - 1 ? articles[articleIndex + 1] : undefined;
+
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    if (isContentLoading) {
+      return;
+    }
+
+    const currentScrollKey = getScrollKey(pathname);
+    const nextScrollY = savedScrollPositions.get(currentScrollKey) ?? 0;
+
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ left: 0, top: nextScrollY, behavior: "auto" });
+    });
+  }, [isContentLoading, pathname]);
 
   useEffect(() => {
     let isMounted = true;
@@ -166,16 +206,16 @@ const App = () => {
 
   useEffect(() => {
     if (article) {
-      document.title = `${article.title} | Личный блог`;
+      document.title = `${article.title} | Первая комната`;
       return;
     }
 
     if (activeTag) {
-      document.title = `#${activeTag} | Личный блог`;
+      document.title = `#${activeTag} | Первая комната`;
       return;
     }
 
-    document.title = "Личный блог";
+    document.title = "Первая комната";
   }, [activeTag, article]);
 
   const handleToggleLike = (slug: string) => {

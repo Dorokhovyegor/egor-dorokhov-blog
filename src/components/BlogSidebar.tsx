@@ -17,8 +17,8 @@ type LinkItem = {
 
 const links: LinkItem[] = [
   {
-    label: "Мой телеграм канал",
-    href: "https://t.me/nichebrodnotes",
+    label: "Телеграм канал",
+    href: "https://t.me/fr_first_room",
     description: "Короткие заметки, наблюдения и идеи"
   }
 ];
@@ -39,12 +39,15 @@ export const BlogSidebar = ({ tags, activeTag, onSelectTag }: SidebarProps) => {
     <aside className="overflow-hidden rounded-3xl">
       <div className="px-6 pb-6 pt-3">
         <div>
-          <h1 className="text-2xl font-semibold leading-tight text-ink">Егор Дорохов</h1>
-          <div className="mt-3 space-y-2 text-sm leading-relaxed text-ink/70">
-            <p>Android-разработчик, 8+ лет опыта.</p>
-            <p>Здесь разборы вопросов и задач с собеседований.</p>
-            <p>Иногда пишу и на другие темы, которые мне интересны.</p>
-          </div>
+          <img
+            src="/uploads/first-room-avatar.jpg"
+            alt="Первая комната"
+            className="mb-5 h-24 w-24 rounded-3xl object-cover shadow-sm"
+          />
+          <h1 className="text-2xl font-semibold leading-tight text-ink">Первая комната</h1>
+          <p className="mt-3 text-sm leading-relaxed text-ink/70">
+            Блог о поиске работы, карьерном росте и прохождении интервью.
+          </p>
         </div>
       </div>
 
