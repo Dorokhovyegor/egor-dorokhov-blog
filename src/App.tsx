@@ -132,7 +132,7 @@ const App = () => {
           return;
         }
 
-        setContentError("Не удалось загрузить статьи. Проверь, что backend запущен.");
+        setContentError("Попробуй обновить страницу чуть позже.");
       } finally {
         if (isMounted) {
           setIsContentLoading(false);
@@ -253,7 +253,7 @@ const App = () => {
     if (contentError) {
       return (
         <section className="rounded-3xl border border-line/70 bg-white p-10 shadow-soft">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink/50">Ошибка</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink/50">Не получилось</p>
           <h2 className="mt-3 text-2xl font-semibold text-ink">Статьи не загрузились</h2>
           <p className="mt-3 text-sm text-ink/65">{contentError}</p>
         </section>
@@ -289,7 +289,7 @@ const App = () => {
 
     return (
       <section className="rounded-3xl border border-line bg-white p-10 shadow-soft">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink/50">404</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink/50">Не найдено</p>
         <h2 className="mt-3 text-3xl font-semibold text-ink">Страница не найдена</h2>
         <p className="mt-3 text-sm text-ink/65">В блоге нет такого пути. Вернись к списку статей.</p>
         <button

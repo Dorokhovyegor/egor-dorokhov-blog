@@ -13,13 +13,15 @@ type LinkItem = {
   label: string;
   href: string;
   description: string;
+  cta: string;
 };
 
 const links: LinkItem[] = [
   {
     label: "Телеграм канал",
     href: "https://t.me/fr_first_room",
-    description: "Короткие заметки, наблюдения и идеи"
+    description: "Подписывайся на телеграм канал, там больше постов не только по данной теме",
+    cta: "Подписаться"
   }
 ];
 
@@ -60,16 +62,24 @@ export const BlogSidebar = ({ tags, activeTag, onSelectTag }: SidebarProps) => {
                   href={link.href}
                   target="_blank"
                   rel="noreferrer"
-                  className="group block w-full rounded-2xl bg-white px-5 py-3.5 shadow-sm transition hover:-translate-y-0.5"
+                  className="group block w-full rounded-2xl border border-[#229ED9]/25 bg-gradient-to-br from-[#E8F6FD] via-white to-white px-5 py-4 shadow-soft ring-1 ring-white/70 transition hover:-translate-y-0.5 hover:border-[#229ED9]/45 hover:shadow-lg"
                 >
-                  <span className="flex items-center justify-between gap-3">
-                    <span className="inline-flex items-center gap-2.5 text-base font-semibold text-ink">
-                      <LinkIcon />
-                      {link.label}
+                  <span className="flex flex-col gap-3">
+                    <span className="flex items-center gap-3">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm">
+                        <LinkIcon />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-base font-semibold leading-tight text-ink">{link.label}</span>
+                        <span className="mt-0.5 block text-xs font-medium text-ink/55">Больше заметок и наблюдений</span>
+                      </span>
+                    </span>
+                    <span className="block w-full rounded-full bg-[#229ED9] px-4 py-2.5 text-center text-sm font-semibold leading-none text-white shadow-sm transition group-hover:bg-[#1689C0]">
+                      {link.cta}
                     </span>
                   </span>
                 </a>
-                <p className="mt-2 inline-flex items-start gap-1.5 px-1 text-xs leading-relaxed text-ink/65">
+                <p className="mt-2.5 px-1 text-xs leading-relaxed text-ink/70">
                   <span>{link.description}</span>
                 </p>
               </div>
