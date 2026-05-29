@@ -1,5 +1,5 @@
 ---
-title: "Что вы там навайбкодили"
+title: "Вайбкодинг"
 slug: "vibe-coding-trash"
 date: "2026-04-30"
 tags:
