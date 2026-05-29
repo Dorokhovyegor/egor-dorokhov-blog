@@ -2,6 +2,7 @@ package httphandlers
 
 import (
 	"encoding/json"
+	"html"
 	"net/http"
 	"net/url"
 	"os"
@@ -20,9 +21,27 @@ type Configuration struct {
 	distDir    string
 }
 
+type pageMetadata struct {
+	Title        string
+	Description  string
+	Keywords     string
+	CanonicalURL string
+	Type         string
+}
+
 var (
 	visitorIDPattern = regexp.MustCompile(`^[0-9a-fA-F-]{20,80}$`)
 	slugPattern      = regexp.MustCompile(`^[\pL\pN_-]{1,160}$`)
+	titleTagPattern  = regexp.MustCompile(`(?is)<title>.*?</title>`)
+)
+
+const (
+	siteName               = "Первая комната"
+	siteOrigin             = "https://eidorokhov.ru"
+	defaultPageTitle       = siteName + " | IT-блог о разработке и карьере"
+	defaultPageDescription = "Блог о разработке, Android, Kotlin, собеседованиях, IT-карьере, ИИ, удаленке и инженерной практике."
+	defaultPageKeywords    = "разработка, Android, Kotlin, coroutines, собеседования, IT-карьера, зарплата, удаленка, выгорание, ИИ, нейронки, vibe coding"
+	defaultImageURL        = siteOrigin + "/uploads/first-room-avatar.jpg"
 )
 
 func NewConfiguration(
@@ -301,7 +320,132 @@ func (c *Configuration) handleStatic(response http.ResponseWriter, request *http
 		return
 	}
 
-	http.ServeFile(response, request, indexFile)
+	c.serveIndex(response, request, indexFile)
+}
+
+func (c *Configuration) serveIndex(response http.ResponseWriter, request *http.Request, indexFile string) {
+	rawHTML, err := os.ReadFile(indexFile)
+	if err != nil {
+		http.Error(response, "could not read index.html", http.StatusInternalServerError)
+		return
+	}
+
+	response.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if request.Method == http.MethodHead {
+		return
+	}
+
+	if _, err := response.Write([]byte(renderIndexHTML(string(rawHTML), c.metadataForRequest(request)))); err != nil {
+		http.Error(response, "could not write index.html", http.StatusInternalServerError)
+	}
+}
+
+func (c *Configuration) metadataForRequest(request *http.Request) pageMetadata {
+	cleanURLPath := path.Clean("/" + request.URL.Path)
+	if cleanURLPath == "/index.html" {
+		cleanURLPath = "/"
+	}
+
+	metadata := pageMetadata{
+		Title:        defaultPageTitle,
+		Description:  defaultPageDescription,
+		Keywords:     defaultPageKeywords,
+		CanonicalURL: siteOrigin + canonicalPath(request, cleanURLPath),
+		Type:         "website",
+	}
+
+	if cleanURLPath == "/" || cleanURLPath == "/blog" {
+		metadata.CanonicalURL = siteOrigin + "/"
+		return metadata
+	}
+
+	if strings.HasPrefix(cleanURLPath, "/blog/tag/") {
+		tag := strings.TrimSpace(strings.TrimPrefix(cleanURLPath, "/blog/tag/"))
+		if decodedTag, err := url.PathUnescape(tag); err == nil && decodedTag != "" {
+			metadata.Title = "#" + decodedTag + " | " + siteName
+			metadata.Description = "Статьи блога «" + siteName + "» по теме «" + decodedTag + "»."
+			metadata.Keywords = decodedTag + ", " + defaultPageKeywords
+		}
+		return metadata
+	}
+
+	if strings.HasPrefix(cleanURLPath, "/blog/") {
+		rawSlug := strings.TrimPrefix(cleanURLPath, "/blog/")
+		if strings.Contains(rawSlug, "/") {
+			return metadata
+		}
+
+		slug, err := url.PathUnescape(rawSlug)
+		if err != nil || !isValidSlug(slug) {
+			return metadata
+		}
+
+		item, found, err := c.articles.GetBySlug(slug)
+		if err != nil || !found {
+			return metadata
+		}
+
+		metadata.Title = item.Title + " | " + siteName
+		metadata.Description = firstNonEmpty(item.Excerpt, defaultPageDescription)
+		metadata.Keywords = articleKeywords(item.Tags)
+		metadata.Type = "article"
+	}
+
+	return metadata
+}
+
+func canonicalPath(request *http.Request, cleanURLPath string) string {
+	if cleanURLPath == "/" {
+		return "/"
+	}
+
+	escapedPath := request.URL.EscapedPath()
+	if escapedPath == "" || escapedPath == "/" || escapedPath == "/index.html" {
+		return cleanURLPath
+	}
+
+	return path.Clean("/" + escapedPath)
+}
+
+func renderIndexHTML(document string, metadata pageMetadata) string {
+	document = titleTagPattern.ReplaceAllLiteralString(
+		document,
+		"<title>"+html.EscapeString(metadata.Title)+"</title>",
+	)
+	document = replaceMetaName(document, "description", metadata.Description)
+	document = replaceMetaName(document, "keywords", metadata.Keywords)
+	document = replaceMetaProperty(document, "og:type", metadata.Type)
+	document = replaceMetaProperty(document, "og:title", metadata.Title)
+	document = replaceMetaProperty(document, "og:description", metadata.Description)
+	document = replaceMetaProperty(document, "og:url", metadata.CanonicalURL)
+	document = replaceMetaProperty(document, "og:image", defaultImageURL)
+	document = replaceMetaName(document, "twitter:title", metadata.Title)
+	document = replaceMetaName(document, "twitter:description", metadata.Description)
+	document = replaceMetaName(document, "twitter:image", defaultImageURL)
+	document = replaceCanonicalURL(document, metadata.CanonicalURL)
+
+	return document
+}
+
+func replaceMetaName(document string, name string, content string) string {
+	pattern := regexp.MustCompile(`<meta\s+name="` + regexp.QuoteMeta(name) + `"\s+content="[^"]*"\s*/?>`)
+	replacement := `<meta name="` + html.EscapeString(name) + `" content="` + html.EscapeString(content) + `" />`
+
+	return pattern.ReplaceAllLiteralString(document, replacement)
+}
+
+func replaceMetaProperty(document string, property string, content string) string {
+	pattern := regexp.MustCompile(`<meta\s+property="` + regexp.QuoteMeta(property) + `"\s+content="[^"]*"\s*/?>`)
+	replacement := `<meta property="` + html.EscapeString(property) + `" content="` + html.EscapeString(content) + `" />`
+
+	return pattern.ReplaceAllLiteralString(document, replacement)
+}
+
+func replaceCanonicalURL(document string, canonicalURL string) string {
+	pattern := regexp.MustCompile(`<link\s+rel="canonical"\s+href="[^"]*"\s*/?>`)
+	replacement := `<link rel="canonical" href="` + html.EscapeString(canonicalURL) + `" />`
+
+	return pattern.ReplaceAllLiteralString(document, replacement)
 }
 
 func isInsideDir(parent string, child string) bool {
@@ -329,6 +473,26 @@ func isValidVisitorID(value string) bool {
 
 func isValidSlug(value string) bool {
 	return slugPattern.MatchString(value)
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		value = strings.TrimSpace(value)
+		if value != "" {
+			return value
+		}
+	}
+
+	return ""
+}
+
+func articleKeywords(tags []string) string {
+	tagKeywords := strings.TrimSpace(strings.Join(tags, ", "))
+	if tagKeywords == "" {
+		return defaultPageKeywords
+	}
+
+	return tagKeywords + ", " + defaultPageKeywords
 }
 
 func (c *Configuration) articleExists(response http.ResponseWriter, slug string) bool {

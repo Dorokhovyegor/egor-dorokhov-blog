@@ -19,6 +19,15 @@ const safeDecode = (value: string) => {
   }
 };
 
+const SITE_NAME = "Первая комната";
+const SITE_ORIGIN = "https://eidorokhov.ru";
+const DEFAULT_PAGE_TITLE = `${SITE_NAME} | IT-блог о разработке и карьере`;
+const DEFAULT_PAGE_DESCRIPTION =
+  "Блог о разработке, Android, Kotlin, собеседованиях, IT-карьере, ИИ, удаленке и инженерной практике.";
+const DEFAULT_PAGE_KEYWORDS =
+  "разработка, Android, Kotlin, coroutines, собеседования, IT-карьера, зарплата, удаленка, выгорание, ИИ, нейронки, vibe coding";
+const DEFAULT_IMAGE_URL = `${SITE_ORIGIN}/uploads/first-room-avatar.jpg`;
+
 const savedScrollPositions = new Map<string, number>();
 
 const getScrollKey = (pathname: string) => {
@@ -59,6 +68,49 @@ const navigate = (to: string) => {
   savedScrollPositions.set(getScrollKey(window.location.pathname || "/"), window.scrollY);
   window.history.pushState({}, "", to);
   window.dispatchEvent(new PopStateEvent("popstate"));
+};
+
+const setMetaContent = (selector: string, content: string) => {
+  const element = document.head.querySelector<HTMLMetaElement>(selector);
+
+  if (element) {
+    element.content = content;
+  }
+};
+
+const setCanonicalUrl = (url: string) => {
+  const element = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+
+  if (element) {
+    element.href = url;
+  }
+};
+
+const setPageMetadata = ({
+  title,
+  description,
+  keywords,
+  canonicalUrl,
+  type = "website"
+}: {
+  title: string;
+  description: string;
+  keywords: string;
+  canonicalUrl: string;
+  type?: "article" | "website";
+}) => {
+  document.title = title;
+  setCanonicalUrl(canonicalUrl);
+  setMetaContent('meta[name="description"]', description);
+  setMetaContent('meta[name="keywords"]', keywords);
+  setMetaContent('meta[property="og:type"]', type);
+  setMetaContent('meta[property="og:title"]', title);
+  setMetaContent('meta[property="og:description"]', description);
+  setMetaContent('meta[property="og:url"]', canonicalUrl);
+  setMetaContent('meta[property="og:image"]', DEFAULT_IMAGE_URL);
+  setMetaContent('meta[name="twitter:title"]', title);
+  setMetaContent('meta[name="twitter:description"]', description);
+  setMetaContent('meta[name="twitter:image"]', DEFAULT_IMAGE_URL);
 };
 
 const App = () => {
@@ -205,17 +257,35 @@ const App = () => {
   }, [articleSlug]);
 
   useEffect(() => {
+    const canonicalUrl = `${SITE_ORIGIN}${window.location.pathname}`;
+
     if (article) {
-      document.title = `${article.title} | Первая комната`;
+      setPageMetadata({
+        title: `${article.title} | ${SITE_NAME}`,
+        description: article.excerpt || DEFAULT_PAGE_DESCRIPTION,
+        keywords: [article.tags.join(", "), DEFAULT_PAGE_KEYWORDS].filter(Boolean).join(", "),
+        canonicalUrl,
+        type: "article"
+      });
       return;
     }
 
     if (activeTag) {
-      document.title = `#${activeTag} | Первая комната`;
+      setPageMetadata({
+        title: `#${activeTag} | ${SITE_NAME}`,
+        description: `Статьи блога «${SITE_NAME}» по теме «${activeTag}».`,
+        keywords: `${activeTag}, ${DEFAULT_PAGE_KEYWORDS}`,
+        canonicalUrl
+      });
       return;
     }
 
-    document.title = "Первая комната";
+    setPageMetadata({
+      title: DEFAULT_PAGE_TITLE,
+      description: DEFAULT_PAGE_DESCRIPTION,
+      keywords: DEFAULT_PAGE_KEYWORDS,
+      canonicalUrl: `${SITE_ORIGIN}/`
+    });
   }, [activeTag, article]);
 
   const handleToggleLike = (slug: string) => {

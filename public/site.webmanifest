@@ -1,0 +1,19 @@
+{
+  "name": "Первая комната",
+  "short_name": "Первая комната",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#7c3aed",
+  "background_color": "#f8fafc",
+  "display": "standalone"
+}
